@@ -1,7 +1,12 @@
+com\atguigu\gmall0715\bean\SpuImage.class
+com\atguigu\gmall0715\bean\BaseSaleAttr.class
 com\atguigu\gmall0715\bean\BaseCatalog2.class
 com\atguigu\gmall0715\bean\UserAddress.class
 com\atguigu\gmall0715\bean\BaseAttrValue.class
+com\atguigu\gmall0715\bean\SpuSaleAttr.class
 com\atguigu\gmall0715\bean\UserInfo.class
 com\atguigu\gmall0715\bean\BaseCatalog3.class
 com\atguigu\gmall0715\bean\BaseAttrInfo.class
 com\atguigu\gmall0715\bean\BaseCatalog1.class
+com\atguigu\gmall0715\bean\SpuInfo.class
+com\atguigu\gmall0715\bean\SpuSaleAttrValue.class

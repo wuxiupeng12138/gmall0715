@@ -81,4 +81,9 @@ public class ManageController {
         }
         return baseAttrInfo.getAttrValueList();
     }
+
+
+
+
+
 }

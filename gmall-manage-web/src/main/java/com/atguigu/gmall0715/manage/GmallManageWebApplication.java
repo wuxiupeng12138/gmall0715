@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class GmallManageWebApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(GmallManageWebApplication.class, args);
+        SpringApplication.run(GmallManageWebApplication.class);
     }
 
 }

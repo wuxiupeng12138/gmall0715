@@ -51,4 +51,22 @@ public interface ManageService {
      * @return
      */
     BaseAttrInfo getBaseAttrInfo(String attrId);
+
+    /**
+     * 通过subinfo对象内的三级分类id，获取所有的商品属性
+     * @param spuInfo
+     * @return
+     */
+    List<SpuInfo> getSpuList(SpuInfo spuInfo);
+
+    /**
+     * 查询所有的销售属性
+     * @return
+     */
+    List<BaseSaleAttr> getBaseSaleAttrList();
+
+    /**
+     * 保存spuinfo
+     */
+    void saveSpuInfo(SpuInfo spuInfo);
 }
