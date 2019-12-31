@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper SYSTEM "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!-- namespace: 表示接口的全路径
+    sqlSession.getMapper(BeanMapper.class)实现的原理: 反射
+        该BeanMapper.xml即为接口的BeanMapper.java的实现类
+-->
+<mapper namespace="com.atguigu.gmall0715.manage.mapper.BaseAttrInfoMapper">
+    <!-- 表示方法执行完成之后，返回的结果集是谁
+        id: 表示唯一性
+        type: 返回结果集的数据类型
+        autoMapping="true"： 表示为自动映射(自动让实体类和表映射上)
+    -->
+    <resultMap id="baseAttrInfoMap" type="com.atguigu.gmall0715.bean.BaseAttrInfo" autoMapping="true">
+        <!--id： 表示主键
+            property: 表示实体类的属性名称
+            column: 表示通过sql执行成功之后的字段
+         -->
+        <id property="id" column="id"></id>
+        <!--result：表示普通的字段-->
+        <!-- <result property="attrName" column="attr_name"></result>-->
+        <!-- mybatis如何表示这种 1:n 的关系 collection
+            ofType: 表示子集合的返回值类型
+        -->
+        <collection property="attrValueList" ofType="com.atguigu.gmall0715.bean.BaseAttrValue" autoMapping="true">
+            <!--当有字段重复的清空下，则需要起个别名-->
+            <id property="id" column="attr_value_id"></id>
+        </collection>
+        <!--association 表示 n：1-->
+    </resultMap>
+    <!--
+        select: 查询方法
+        id: 表示方法的名称
+        resultMap: 这个方法执行完后返回的自定义结果集
+        #{0}: 代表获取第一个参数-->
+    <select id="selectBaseAttrInfoListByCatalog3Id" resultMap="baseAttrInfoMap">
+       SELECT
+           bai.id,
+           bai.attr_name,
+           bai.catalog3_id,
+           bav.id attr_value_id,
+           bav.value_name,
+           bav.attr_id
+        FROM
+           base_attr_info bai
+        INNER JOIN base_attr_value bav ON bai.id = bav.attr_id
+        WHERE
+           catalog3_id = #{0}
+    </select>
+</mapper>

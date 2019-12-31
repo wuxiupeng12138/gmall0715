@@ -53,8 +53,9 @@ public class ManageController {
      * @return
      */
     @RequestMapping("attrInfoList")
-    public List<BaseAttrInfo> attrInfoList(BaseAttrInfo baseAttrInfo){
-        return manageService.getAttrInfoList(baseAttrInfo);
+    public List<BaseAttrInfo> attrInfoList(String catalog3Id,BaseAttrInfo baseAttrInfo){
+        //return manageService.getAttrInfoList(baseAttrInfo);
+        return manageService.getAttrInfoList(catalog3Id);
     }
 
 
@@ -69,6 +70,7 @@ public class ManageController {
         manageService.saveAttrInfo(baseAttrInfo);
     }
 
+
     //http://localhost:8082/getAttrValueList?attrId=100
     @RequestMapping("getAttrValueList")
     public List<BaseAttrValue> getAttrValueList(String attrId){
@@ -76,9 +78,9 @@ public class ManageController {
         //return manageService.getAttrValueList(baseAttrValue);
         //业务来讲：
         BaseAttrInfo baseAttrInfo = manageService.getBaseAttrInfo(attrId);
-        if(baseAttrInfo == null){
-            return null;
-        }
+//        if(baseAttrInfo == null){
+//            return null;
+//        }
         return baseAttrInfo.getAttrValueList();
     }
 

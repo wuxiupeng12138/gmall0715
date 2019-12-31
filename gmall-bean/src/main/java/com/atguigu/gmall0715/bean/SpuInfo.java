@@ -24,6 +24,7 @@ public class SpuInfo implements Serializable {
 
     @Transient
     private List<SpuSaleAttr> spuSaleAttrList;
+
     @Transient
     private List<SpuImage> spuImageList;
 
