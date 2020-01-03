@@ -202,8 +202,32 @@ public class ManageServiceImpl implements ManageService {
                 skuImageMapper.insertSelective(skuImage);
             }
         }
+    }
+
+    @Override
+    public SkuInfo getSkuInfo(String skuId) {
+        //1.查询基本的skuInfo信息
+        SkuInfo skuInfo = skuInfoMapper.selectByPrimaryKey(skuId);
+        //2.查询并封装skuImage到skuInfo内
+        SkuImage skuImage = new SkuImage();
+        skuImage.setSkuId(skuId);
+        List<SkuImage> skuImages = skuImageMapper.select(skuImage);
+
+        skuInfo.setSkuImageList(skuImages);
 
 
+
+        return skuInfo;
+    }
+
+    @Override
+    public List<SpuSaleAttr> getSpuSaleAttrListCheckBySku(SkuInfo skuInfo) {
+        return spuSaleAttrMapper.selectSpuSaleAttrListCheckBySku(skuInfo.getId(),skuInfo.getSpuId());
+    }
+
+    @Override
+    public List<SkuSaleAttrValue> getSkuSaleAttrValueListBySpu(String spuId) {
+        return skuSaleAttrValueMapper.getSkuSaleAttrValueListBySpu(spuId);
     }
 
 
