@@ -32,6 +32,6 @@
         LEFT JOIN sku_sale_attr_value skv ON skv.sale_attr_id= sa.sale_attr_id AND skv.sale_attr_value_id=sv.id AND skv.sku_id=#{arg0}
         WHERE  sa.spu_id=#{arg1}
         ORDER BY sv.sale_attr_id,sv.id
-</select>
+    </select>
 
 </mapper>

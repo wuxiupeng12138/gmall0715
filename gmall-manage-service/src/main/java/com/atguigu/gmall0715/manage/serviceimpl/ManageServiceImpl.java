@@ -1,14 +1,26 @@
 package com.atguigu.gmall0715.manage.serviceimpl;
 
 import com.alibaba.dubbo.config.annotation.Service;
+import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall0715.bean.*;
+import com.atguigu.gmall0715.config.RedisUtil;
+import com.atguigu.gmall0715.manage.constant.ManageConst;
 import com.atguigu.gmall0715.manage.mapper.*;
 import com.atguigu.gmall0715.service.ManageService;
+import org.apache.commons.lang3.StringUtils;
+import org.redisson.Redisson;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import redis.clients.jedis.Jedis;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class ManageServiceImpl implements ManageService {
@@ -42,6 +54,11 @@ public class ManageServiceImpl implements ManageService {
     private SkuImageMapper skuImageMapper;
     @Autowired
     private SkuSaleAttrValueMapper skuSaleAttrValueMapper;
+
+    //从Spring容器中获取数据(redisUtil)
+    @Autowired
+    private RedisUtil redisUtil;
+
 
     @Override
     public List<BaseCatalog1> getCatalog1() {
@@ -206,16 +223,126 @@ public class ManageServiceImpl implements ManageService {
 
     @Override
     public SkuInfo getSkuInfo(String skuId) {
+        return getSkuInfoByRedisson(skuId);
+        //return getSkuInfoByRedisSet(skuId);
+    }
+
+    private SkuInfo getSkuInfoByRedisson(String skuId) {
+        SkuInfo skuInfo = null;
+        Jedis jedis = null;
+        try {
+            //1.获取jedis，创建Skuinfo对象
+            jedis = redisUtil.getJedis();
+            //2.定义key
+            String skuKey = ManageConst.SKUKEY_PREFIX + skuId + ManageConst.SKUKEY_SUFFIX;
+            String skuJson = jedis.get(skuKey);
+            if(skuJson == null){
+                //redisson加锁，走数据库并放入缓存!
+                Config config = new Config();
+                //设置redisson节点
+                config.useSingleServer().setAddress("redis://47.94.91.51:6379");
+                //创建redisson实例
+                RedissonClient redisson = Redisson.create(config);
+                //创建锁
+                RLock lock = redisson.getLock("myLock");
+                System.out.println("redisson分布式锁!");
+                //lock.lock(10, TimeUnit.SECONDS);
+                //lock.lock();
+                boolean res = lock.tryLock(100,10, TimeUnit.SECONDS);
+                if(res){
+                    try{
+                        //业务逻辑
+                        //从db中取数据并放入缓存
+                        skuInfo = getSkuInfoDB(skuId);
+                        if(skuInfo==null) {
+                            jedis.setex(skuKey, ManageConst.SKUKEY_TIMEOUT, "");
+                            return skuInfo;
+                        }
+                        //将数据放入缓存
+                        jedis.setex(skuKey,ManageConst.SKUKEY_TIMEOUT, JSON.toJSONString(skuInfo));
+                        return skuInfo;
+                    }finally {
+                        //解锁
+                        lock.unlock();
+                    }
+                }
+            }else{
+                //缓存中有数据
+                skuInfo = JSON.parseObject(skuJson,SkuInfo.class);
+                return skuInfo;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            //关闭缓存
+            if(jedis!=null)
+                jedis.close();
+        }
+
+        return getSkuInfoDB(skuId);
+    }
+
+    private SkuInfo getSkuInfoByRedisSet(String skuId) {
+        SkuInfo skuInfo = null;
+        Jedis jedis = null;
+        try {
+            //1.获取jedis，创建Skuinfo对象
+            jedis = redisUtil.getJedis();
+            //2.定义key
+            String skuKey = ManageConst.SKUKEY_PREFIX + skuId + ManageConst.SKUKEY_SUFFIX;
+            String skuJson = jedis.get(skuKey);
+            if(skuJson == null){
+                //没有数据
+                System.out.println("缓存中没有数据");
+                //准备加索! set k1 v1 px 1000 nx
+                //定义锁的key：k1
+                String skuLockKey = ManageConst.SKUKEY_PREFIX+ skuId +ManageConst.SKUKEY_SUFFIX;
+                //定义key锁定的值 v1
+                String token = UUID.randomUUID().toString().replace("-","");
+                //执行加索命令
+                String lockKey = jedis.set(skuLockKey, token, "NX", "PX", ManageConst.SKULOCK_EXPIRE_PX);
+                if("OK".equals(lockKey)){
+                    System.out.println("上锁成功");
+                    //从db中取数据并放入缓存
+                    skuInfo = getSkuInfoDB(skuId);
+                    //将数据放入缓存
+                    jedis.setex(skuKey,ManageConst.SKUKEY_TIMEOUT, JSON.toJSONString(skuInfo));
+
+                    //解锁 lua脚本
+                    String script ="if redis.call('get', KEYS[1])==ARGV[1] then return redis.call('de1', EYS[1]) else return 0 end";
+                    jedis.eval(script, Collections.singletonList(skuLockKey), Collections.singletonList(token));
+                    return skuInfo;
+                }else{
+                    //说明有人正在操作!等待
+                    Thread.sleep(1000);
+                    return getSkuInfo(skuId);
+                }
+            }else{
+                //缓存中有数据
+                skuInfo = JSON.parseObject(skuJson,SkuInfo.class);
+                return skuInfo;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            //关闭缓存
+            if(jedis!=null)
+                 jedis.close();
+        }
+
+        return getSkuInfoDB(skuId);
+    }
+
+    //抽取方法单独走数据库
+    private SkuInfo getSkuInfoDB(String skuId) {
         //1.查询基本的skuInfo信息
         SkuInfo skuInfo = skuInfoMapper.selectByPrimaryKey(skuId);
         //2.查询并封装skuImage到skuInfo内
         SkuImage skuImage = new SkuImage();
         skuImage.setSkuId(skuId);
         List<SkuImage> skuImages = skuImageMapper.select(skuImage);
-
         skuInfo.setSkuImageList(skuImages);
-
-
 
         return skuInfo;
     }
