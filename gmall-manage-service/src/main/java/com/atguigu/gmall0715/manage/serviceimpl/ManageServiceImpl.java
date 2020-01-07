@@ -197,7 +197,7 @@ public class ManageServiceImpl implements ManageService {
         List<SkuAttrValue> skuAttrValueList = skuInfo.getSkuAttrValueList();
         if(skuAttrValueList != null && skuAttrValueList.size() > 0){
             for (SkuAttrValue skuAttrValue : skuAttrValueList) {
-                skuAttrValue.setSkuId(skuInfo.getSpuId());
+                skuAttrValue.setSkuId(skuInfo.getId());
                 skuAttrValueMapper.insertSelective(skuAttrValue);
             }
         }
@@ -254,7 +254,7 @@ public class ManageServiceImpl implements ManageService {
                         //业务逻辑
                         //从db中取数据并放入缓存
                         skuInfo = getSkuInfoDB(skuId);
-                        if(skuInfo==null) {
+                        if(skuInfo==null) {//解决的时缓存穿透的问题
                             jedis.setex(skuKey, ManageConst.SKUKEY_TIMEOUT, "");
                             return skuInfo;
                         }
@@ -279,7 +279,6 @@ public class ManageServiceImpl implements ManageService {
             if(jedis!=null)
                 jedis.close();
         }
-
         return getSkuInfoDB(skuId);
     }
 
@@ -307,8 +306,12 @@ public class ManageServiceImpl implements ManageService {
                     //从db中取数据并放入缓存
                     skuInfo = getSkuInfoDB(skuId);
                     //将数据放入缓存
-                    jedis.setex(skuKey,ManageConst.SKUKEY_TIMEOUT, JSON.toJSONString(skuInfo));
+                    if(skuInfo == null){ //加此操作解决缓存穿透问题
+                        jedis.setex(skuKey, ManageConst.SKUKEY_TIMEOUT, "");
 
+                    }else{
+                        jedis.setex(skuKey,ManageConst.SKUKEY_TIMEOUT, JSON.toJSONString(skuInfo));
+                    }
                     //解锁 lua脚本
                     String script ="if redis.call('get', KEYS[1])==ARGV[1] then return redis.call('de1', EYS[1]) else return 0 end";
                     jedis.eval(script, Collections.singletonList(skuLockKey), Collections.singletonList(token));
@@ -330,7 +333,6 @@ public class ManageServiceImpl implements ManageService {
             if(jedis!=null)
                  jedis.close();
         }
-
         return getSkuInfoDB(skuId);
     }
 
@@ -344,6 +346,10 @@ public class ManageServiceImpl implements ManageService {
         List<SkuImage> skuImages = skuImageMapper.select(skuImage);
         skuInfo.setSkuImageList(skuImages);
 
+        //skuAttrValue
+        SkuAttrValue skuAttrValue = new SkuAttrValue();
+        skuAttrValue.setSkuId(skuId);
+        skuInfo.setSkuAttrValueList(skuAttrValueMapper.select(skuAttrValue));
         return skuInfo;
     }
 
