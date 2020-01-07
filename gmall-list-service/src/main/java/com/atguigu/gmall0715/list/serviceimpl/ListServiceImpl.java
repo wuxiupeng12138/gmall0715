@@ -4,11 +4,13 @@ import com.alibaba.dubbo.config.annotation.Service;
 import com.atguigu.gmall0715.bean.SkuLsInfo;
 import com.atguigu.gmall0715.bean.SkuLsParams;
 import com.atguigu.gmall0715.bean.SkuLsResult;
+import com.atguigu.gmall0715.config.RedisUtil;
 import com.atguigu.gmall0715.service.ListService;
 import io.searchbox.client.JestClient;
 import io.searchbox.core.Index;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
+import io.searchbox.core.Update;
 import io.searchbox.core.search.aggregation.TermsAggregation;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
@@ -20,6 +22,7 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import redis.clients.jedis.Jedis;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,6 +33,9 @@ public class ListServiceImpl implements ListService {
     //调用操作es的客户端
     @Autowired
     private JestClient jestClient;
+    //操作reids的工具类
+    @Autowired
+    private RedisUtil redisUtil;
 
     public static final String ES_INDEX = "gmall";
     public static final String ES_TYPE = "SkuInfo";
@@ -60,9 +66,42 @@ public class ListServiceImpl implements ListService {
             e.printStackTrace();
         }
         //3.获取结果集
-        SkuLsResult skuLsResult = makeResultForSearch(searchResult,skuLsParams);
+        SkuLsResult skuLsResult = makeResultForSearch(searchResult, skuLsParams);
 
         return skuLsResult;
+    }
+
+    @Override
+    public void incrHotScore(String skuId) {
+        //记录用户访问商品的次数
+        //获取Jedis
+        Jedis jedis = redisUtil.getJedis();
+        //zSet
+        Double hotScore = jedis.zincrby("hotScore", 1, "skuId:" + skuId);
+
+        if (hotScore % 10 == 0) {
+            //更新es
+            updateHotScore(skuId, Math.round(hotScore));
+        }
+
+    }
+
+    //更新es的hotScore(热度)
+    private void updateHotScore(String skuId, long hotScore) {
+        //1.定义dsl语句POST gmall/SkuInfo/38/_update {"doc": {"hotScore":20}}
+        String upd = "{\n" +
+                "  \"doc\": {\n" +
+                "    \"hotScore\":" + hotScore + "\n" +
+                "  }\n" +
+                "}";
+        //2.准备执行的动作
+        Update build = new Update.Builder(upd).index(ES_INDEX).type(ES_TYPE).id(skuId).build();
+        //3.执行
+        try {
+            jestClient.execute(build);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -71,7 +110,7 @@ public class ListServiceImpl implements ListService {
      * @param searchResult
      * @return
      */
-    private SkuLsResult makeResultForSearch(SearchResult searchResult,SkuLsParams skuLsParams) {
+    private SkuLsResult makeResultForSearch(SearchResult searchResult, SkuLsParams skuLsParams) {
         SkuLsResult skuLsResult = new SkuLsResult();
         //skuLsInfoList： 保存商品的
         ArrayList<SkuLsInfo> skuLsInfos = new ArrayList<>();
@@ -92,13 +131,13 @@ public class ListServiceImpl implements ListService {
         skuLsResult.setTotal(searchResult.getTotal());
         //totalPages: 总页数
         //long totalPages = skuLsResult.getTotal() % skuLsParams.getPageSize() == 0 ? skuLsResult.getTotal() / skuLsParams.getPageSize() : skuLsResult.getTotal() / skuLsParams.getPageSize() + 1;
-        long totalPages = (searchResult.getTotal()+skuLsParams.getPageSize()-1)/skuLsParams.getPageSize();
+        long totalPages = (searchResult.getTotal() + skuLsParams.getPageSize() - 1) / skuLsParams.getPageSize();
         skuLsResult.setTotalPages(totalPages);
         //平台属性值valueId集合 显示平台属性，平台属性值
         ArrayList<String> list = new ArrayList<>();
         TermsAggregation groupby_attr = searchResult.getAggregations().getTermsAggregation("groupby_attr");
         List<TermsAggregation.Entry> buckets = groupby_attr.getBuckets();
-        if(buckets != null && buckets.size() > 0){
+        if (buckets != null && buckets.size() > 0) {
             for (TermsAggregation.Entry bucket : buckets) {
                 String valueId = bucket.getKey();
                 list.add(valueId);

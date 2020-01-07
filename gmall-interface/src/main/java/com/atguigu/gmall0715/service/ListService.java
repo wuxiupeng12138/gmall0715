@@ -17,4 +17,10 @@ public interface ListService {
      * @return
      */
     SkuLsResult search(SkuLsParams skuLsParams);
+
+    /**
+     * 更新ES的hotScore
+     * @param skuId
+     */
+    public void incrHotScore(String skuId);
 }

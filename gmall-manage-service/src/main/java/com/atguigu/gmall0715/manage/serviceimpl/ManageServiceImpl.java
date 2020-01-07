@@ -363,5 +363,17 @@ public class ManageServiceImpl implements ManageService {
         return skuSaleAttrValueMapper.getSkuSaleAttrValueListBySpu(spuId);
     }
 
+    @Override
+    public List<BaseAttrInfo> getAttrInfoList(List<String> attrValueIdList) {
+        //select * from base_attr_info baiinner join base_attr_value bavon bai.id = bav.attr_idwhere bav.id in (xx,xx,xx)
+        //方案一: 传递集合attrValueIdList --> 使用mybatis的动态标签库 <foreach item="" collection="">
+        //方案二: 把集合数据转为字符串传递 使用!
+
+        String attrValueIds = StringUtils.join(attrValueIdList.toArray(), ",");
+        System.out.println(attrValueIds);
+
+        return baseAttrInfoMapper.selectAttrInfoListByIds(attrValueIds);
+    }
+
 
 }
