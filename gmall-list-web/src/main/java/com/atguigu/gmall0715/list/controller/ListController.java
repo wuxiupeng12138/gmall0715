@@ -1,13 +1,11 @@
 package com.atguigu.gmall0715.list.controller;
 
 import com.alibaba.dubbo.config.annotation.Reference;
-import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall0715.bean.*;
 import com.atguigu.gmall0715.service.ListService;
 import com.atguigu.gmall0715.service.ManageService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
@@ -120,3 +118,4 @@ public class ListController {
         return urlParam;
     }
 }
+
