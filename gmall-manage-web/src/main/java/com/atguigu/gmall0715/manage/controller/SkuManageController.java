@@ -57,7 +57,7 @@ public class SkuManageController {
     }
 
     //如何上传? 根据skuId上传
-        //批量上传 || 单个上传
+    //批量上传 || 单个上传
     @RequestMapping("onSale")
     public void onSale(String skuId){ // 此处书写测试的是单个上传
         //商品上架

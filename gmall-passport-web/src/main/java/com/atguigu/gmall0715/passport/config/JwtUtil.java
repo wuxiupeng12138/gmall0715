@@ -21,14 +21,12 @@ public class JwtUtil {
         Base64UrlCodec base64UrlCodec = new Base64UrlCodec();
         key = base64UrlCodec.encode(key);
 
-
         JwtBuilder jwtBuilder = Jwts.builder().signWith(SignatureAlgorithm.HS256,key);
 
         jwtBuilder = jwtBuilder.setClaims(param);
         //由三部分组成
         String token = jwtBuilder.compact();
         return token;
-
     }
 
     /**

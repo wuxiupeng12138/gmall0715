@@ -248,6 +248,7 @@ public class ManageServiceImpl implements ManageService {
                 System.out.println("redisson分布式锁!");
                 //lock.lock(10, TimeUnit.SECONDS);
                 //lock.lock();
+                //尝试加索，最多等待100秒，上锁以后10秒自动解锁
                 boolean res = lock.tryLock(100,10, TimeUnit.SECONDS);
                 if(res){
                     try{

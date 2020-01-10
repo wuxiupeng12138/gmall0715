@@ -8,10 +8,11 @@ import java.util.List;
 
 @Data
 public class SkuLsInfo implements Serializable {
+
     String id;
 
     BigDecimal price;
-
+    //商品的skuName
     String skuName;
 
     String catalog3Id;

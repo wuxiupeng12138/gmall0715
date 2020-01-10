@@ -5,6 +5,7 @@ com\atguigu\gmall0715\bean\SkuSaleAttrValue.class
 com\atguigu\gmall0715\bean\BaseAttrInfo.class
 com\atguigu\gmall0715\bean\SkuLsResult.class
 com\atguigu\gmall0715\bean\BaseCatalog1.class
+com\atguigu\gmall0715\bean\CartInfo.class
 com\atguigu\gmall0715\bean\SkuInfo.class
 com\atguigu\gmall0715\bean\SpuSaleAttrValue.class
 com\atguigu\gmall0715\bean\SpuImage.class

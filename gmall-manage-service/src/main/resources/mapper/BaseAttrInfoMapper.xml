@@ -53,7 +53,6 @@
          INNER JOIN base_attr_value av
          ON ai.id=av.attr_id
          WHERE av.id IN (${valueIds})
-
     </select>
 
 </mapper>

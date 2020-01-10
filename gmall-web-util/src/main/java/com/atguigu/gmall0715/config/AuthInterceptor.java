@@ -38,7 +38,8 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
             //保存到request作用域中
             request.setAttribute("nickName",nickName);
         }
-        //获取用户访问的控制器上是否有 @LoginRequire注解
+
+        //获取用户访问的控制器上是否有 @LoginRequire 注解
         HandlerMethod handlerMethod = (HandlerMethod) handler;
         //获取方法上的注解
         LoginRequire methodAnnotation = handlerMethod.getMethodAnnotation(LoginRequire.class);
@@ -46,7 +47,7 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
         if(methodAnnotation != null){
             //直接认证! 用户是否登录! http://passport.atguigu.com/verify?token=xxx&salt=xxx
             String salt = request.getHeader("X-forwarded-for");
-            //远程调用!
+            //远程调用! (通过HttpClientUtil去向verify进行了情求)
             String result = HttpClientUtil.doGet(WebConst.VERIFY_ADDRESS + "?token=" + token + "&salt=" + salt);
             if("success".equals(result)){
                 //用户已经是登录状态
@@ -57,8 +58,7 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
                 //放行
                 return true;
             }else{
-                //当LoginRequire的注解为true时必须登录!
-                if (methodAnnotation.autoRedirect()){
+                if (methodAnnotation.autoRedirect()){  //当LoginRequire的注解为true时必须登录!
                     //应该跳转到登陆页 http:item.gmall.com/37.html ---> http://passport.atguigu.com/index?originUrl=http%3A%2F%2Fitem.gmall.com%2F37.html
                     //需要先得到用户访问的url路径
                     String requestUrl = request.getRequestURL().toString();

@@ -53,7 +53,7 @@ public class ListServiceImpl implements ListService {
     }
 
     @Override
-    public SkuLsResult search(SkuLsParams skuLsParams) {
+    public SkuLsResult search(SkuLsParams skuLsParams) {// 三种参数 keyword、catalog3Id、valueId
         //1.定义好DSL语句
         String query = makeQueryStringForSearch(skuLsParams);
         //2.准备好执行的动作
@@ -61,7 +61,6 @@ public class ListServiceImpl implements ListService {
         SearchResult searchResult = null;
         try {
             searchResult = jestClient.execute(build);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -152,6 +151,7 @@ public class ListServiceImpl implements ListService {
 
     /**
      * 根据用户输入的检索条件生成DSL语句
+     *  GET index/type/_search {"query":{"bool":{"filter":{"term":""},"must":[{"match":""},{..}]}},"form":1,size:2,}
      *
      * @param skuLsParams
      * @return

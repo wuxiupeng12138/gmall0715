@@ -21,9 +21,9 @@ public class PassportController {
 
     @Reference
     private UserService userService;
+    //https://passport.jd.com/new/login.aspx?ReturnUrl=https%3A%2%F%2Ewww.jd.com%2E
 
     //获取用户点击的url后面的参数
-    //https://passport.jd.com/new/login.aspx?ReturnUrl=https%3A%2%F%2Ewww.jd.com%2E
     //http://localhost:8087/index?originUrl=xxx
     @RequestMapping("index")
     public String index(HttpServletRequest request){
@@ -41,7 +41,7 @@ public class PassportController {
         UserInfo info = userService.login(userInfo);
         if(info != null){
             //data -- token
-            //参数nickName
+            //参数 nickName
             HashMap<String, Object> map = new HashMap<>();
             map.put("userId",info.getId());
             map.put("nickName",info.getNickName());
@@ -55,6 +55,7 @@ public class PassportController {
         return "fail";
     }
 
+    //判断用户是否登陆
     //直接将token、sale以参数的形式传入到控制器
     //http://passport.atguigu.com/verfiy?token=xxx&sale=xxx
     @RequestMapping("verify")

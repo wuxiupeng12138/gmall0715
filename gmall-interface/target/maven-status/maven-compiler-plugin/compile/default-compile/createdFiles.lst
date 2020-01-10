@@ -1,4 +1,5 @@
 com\atguigu\gmall0715\service\ListService.class
 com\atguigu\gmall0715\service\ManageService.class
 com\atguigu\gmall0715\service\UserAddressService.class
+com\atguigu\gmall0715\service\CartService.class
 com\atguigu\gmall0715\service\UserService.class

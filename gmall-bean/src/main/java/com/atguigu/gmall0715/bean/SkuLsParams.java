@@ -10,6 +10,7 @@ public class SkuLsParams implements Serializable {
     String  keyword;
     //三级分类id
     String catalog3Id;
+
     //平台属性值id
     String[] valueId;
     //当前页
