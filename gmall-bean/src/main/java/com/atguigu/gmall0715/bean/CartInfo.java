@@ -31,5 +31,4 @@ public class CartInfo implements Serializable {
     // 实时价格
     @Transient
     BigDecimal skuPrice;
-
 }

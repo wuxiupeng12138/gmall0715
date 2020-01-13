@@ -9,6 +9,8 @@ import com.atguigu.gmall0715.service.CartService;
 import com.atguigu.gmall0715.service.ManageService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.thymeleaf.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -25,8 +27,13 @@ public class CartController {
     @Reference
     private ManageService manageService;
 
-    //http://cart.gmall.com/addToCart
-    @RequestMapping("addToCart")
+    /**
+     * 添加购物车
+     * @param request
+     * @param response
+     * @return
+     */
+    @RequestMapping("addToCart")//http://cart.gmall.com/addToCart
     @LoginRequire(autoRedirect = false)//使拦截器生效
     public String addToCart(HttpServletRequest request, HttpServletResponse response){
         //得到前台传递过来的数据
@@ -51,6 +58,13 @@ public class CartController {
         request.setAttribute("skuNum",skuNum);
         return "success";
     }
+
+
+    /**
+     * 查询购物车
+     * @param request
+     * @return
+     */
     //http://cart.gmall.com/cartList
     @RequestMapping("cartList")
     @LoginRequire(autoRedirect = false)
@@ -61,21 +75,89 @@ public class CartController {
         List<CartInfo> cartInfoList = new ArrayList<>();
         //登陆的 获取数据时根据用户id去查询购物车列表
         if(userId != null){
-            cartInfoList = cartService.getCartList(userId);
+            //先获取未登录的购物车数据
+            String userTempId = CookieUtil.getCookieValue(request, "user-key", false);
+            //声明一个集合来存储未登录购物车数据
+            List<CartInfo> cartInfoNoLoginList = new ArrayList<>();
+            //获取未登录购物车数据
+            if(!StringUtils.isEmpty(userTempId)){
+                cartInfoNoLoginList =  cartService.getCartList(userTempId);
+                //判断集合中是否有数据
+                if(cartInfoNoLoginList != null && cartInfoNoLoginList.size() > 0){
+                    //开始合并购物车
+                    cartInfoList = cartService.mergerToCartList(cartInfoNoLoginList,userId);
+
+                    //删除未登录购物车数据
+                    cartService.deleteCartList(userTempId);
+
+                }
+            }
+            //什么情况直接查询登录数据
+            if(StringUtils.isEmpty(userTempId) || (cartInfoNoLoginList == null || cartInfoNoLoginList.size() == 0)){
+                //如果临时id为空，说明已登录，直接查询登录信息
+                cartInfoList = cartService.getCartList(userId);
+            }
         }else{
             //未登录，获取临时用户id 查询数据，临时用户id在cookie中
             String userTempId = CookieUtil.getCookieValue(request, "user-key", false);
             //获取未登录购物车数据
-            if(userTempId != null){
+            if(!StringUtils.isEmpty(userTempId)){
                 cartInfoList =  cartService.getCartList(userTempId);
             }
-
         }
-
-
         request.setAttribute("cartInfoList",cartInfoList);
 
         return "cartList";
+    }
+
+    /**
+     * 修改勾选状态
+     * @param request
+     */
+    //http://cart.gmall.com/checkCart
+    @RequestMapping("checkCart")
+    @ResponseBody
+    @LoginRequire(autoRedirect = false)
+    public void checkCart(HttpServletRequest request){
+        //登录 未登录
+        //获取用户id
+        String userId = (String) request.getAttribute("userId");
+        String isChecked = request.getParameter("isChecked");
+        String skuId = request.getParameter("skuId");
+        if(userId == null){
+            //未登录
+            userId = CookieUtil.getCookieValue(request,"user-key",false);
+            cartService.checkCart(skuId,userId,isChecked);
+        }
+        //登录的
+        cartService.checkCart(skuId,userId,isChecked);
+    }
+
+    /**
+     * 去结算
+     * @return
+     */
+    //http://cart.gmall.com/toTrade
+    @RequestMapping("toTrade")
+    @LoginRequire
+    public String toTrade(HttpServletRequest request){
+        String userId = (String) request.getAttribute("userId");
+        //细节处理! 选中状态合并
+        String userTempId = CookieUtil.getCookieValue(request,"user-key",false);
+        if(!StringUtils.isEmpty(userTempId)){
+            List<CartInfo> cartInfoNoLoginList =  cartService.getCartList(userTempId);
+            //判断集合中是否有数据
+            if(cartInfoNoLoginList != null && cartInfoNoLoginList.size() > 0){
+                //开始合并购物车
+                cartService.mergerToCartList(cartInfoNoLoginList,userId);
+
+                //删除未登录购物车数据
+                cartService.deleteCartList(userTempId);
+            }
+        }
+        //重定向到订单
+        return "redirect://trade.gmall.com/trade";
+
     }
 
 

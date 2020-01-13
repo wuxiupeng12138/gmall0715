@@ -82,7 +82,6 @@ public class ListServiceImpl implements ListService {
             //更新es
             updateHotScore(skuId, Math.round(hotScore));
         }
-
     }
 
     //更新es的hotScore(热度)
