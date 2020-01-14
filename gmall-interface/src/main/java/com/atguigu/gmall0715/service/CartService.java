@@ -49,4 +49,11 @@ public interface CartService {
      * @return
      */
     List<CartInfo> getCartCheckedList(String userId);
+
+    /**
+     * 查询最新价格
+     * @param userId
+     * @return
+     */
+    List<CartInfo> loadCartCache(String userId);
 }

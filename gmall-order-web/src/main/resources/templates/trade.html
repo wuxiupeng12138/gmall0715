@@ -139,7 +139,8 @@
 				<input th:name="'orderDetailList['+${stat.index}+'].imgUrl'" type="hidden"    th:value="${detail.imgUrl}" />
 				<input th:name="'orderDetailList['+${stat.index}+'].orderPrice'" type="hidden"    th:value="${detail.orderPrice}" />
 			</span>
-			<input name="tradeNo" type="hidden"  value=""  />
+            <!--生成流水号，将流水号放入隐藏域中-->
+			<input name="tradeNo" type="hidden" th:value="${tradeNo}" />
 		</form>
 		<script>
             $(function() {

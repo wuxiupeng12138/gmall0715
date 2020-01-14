@@ -8,6 +8,9 @@ import javax.persistence.Transient;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
+/**
+ * 商品明细
+ */
 @Data
 public class OrderDetail implements Serializable {
     @Id

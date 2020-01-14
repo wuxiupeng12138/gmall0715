@@ -11,6 +11,9 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * 商品表
+ */
 @Data
 public class OrderInfo implements Serializable {
     @Column
@@ -24,7 +27,6 @@ public class OrderInfo implements Serializable {
     @Column
     private String consigneeTel;
 
-
     @Column
     private BigDecimal totalAmount;
 
@@ -33,7 +35,6 @@ public class OrderInfo implements Serializable {
 
     @Column
     private ProcessStatus processStatus;
-
 
     @Column
     private String userId;
@@ -59,10 +60,8 @@ public class OrderInfo implements Serializable {
     @Column
     private String trackingNo;
 
-
     @Transient
     private List<OrderDetail> orderDetailList;
-
 
     @Transient
     private String wareId;

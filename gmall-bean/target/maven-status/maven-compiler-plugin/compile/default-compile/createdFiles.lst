@@ -12,6 +12,7 @@ com\atguigu\gmall0715\bean\enums\PaymentStatus.class
 com\atguigu\gmall0715\bean\OrderDetail.class
 com\atguigu\gmall0715\bean\SkuLsParams.class
 com\atguigu\gmall0715\bean\enums\PaymentWay.class
+com\atguigu\gmall0715\bean\PaymentInfo.class
 com\atguigu\gmall0715\bean\enums\ProcessStatus.class
 com\atguigu\gmall0715\bean\SkuSaleAttrValue.class
 com\atguigu\gmall0715\bean\BaseAttrInfo.class

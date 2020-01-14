@@ -18,6 +18,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 总共四步 :
+ *      1.添加购物车
+ *          查询购物车内信息
+ *      2.查询购物车
+ *      3.修改勾选状态
+ *      4.生成订单
+ */
 @Controller
 public class CartController {
 
@@ -33,10 +41,10 @@ public class CartController {
      * @param response
      * @return
      */
-    @RequestMapping("addToCart")//http://cart.gmall.com/addToCart
+    @RequestMapping("addToCart") //http://cart.gmall.com/addToCart
     @LoginRequire(autoRedirect = false)//使拦截器生效
     public String addToCart(HttpServletRequest request, HttpServletResponse response){
-        //得到前台传递过来的数据
+        //1.得到前台传递过来的数据 {添加数量和商品id}
         String skuNum = request.getParameter("skuNum");
         String skuId = request.getParameter("skuId");
         //如何判断用户是否登陆
@@ -86,10 +94,8 @@ public class CartController {
                 if(cartInfoNoLoginList != null && cartInfoNoLoginList.size() > 0){
                     //开始合并购物车
                     cartInfoList = cartService.mergerToCartList(cartInfoNoLoginList,userId);
-
                     //删除未登录购物车数据
                     cartService.deleteCartList(userTempId);
-
                 }
             }
             //什么情况直接查询登录数据
@@ -146,7 +152,7 @@ public class CartController {
         String userTempId = CookieUtil.getCookieValue(request,"user-key",false);
         if(!StringUtils.isEmpty(userTempId)){
             List<CartInfo> cartInfoNoLoginList =  cartService.getCartList(userTempId);
-            //判断集合中是否有数据
+            //判断购物车集合中是否有数据
             if(cartInfoNoLoginList != null && cartInfoNoLoginList.size() > 0){
                 //开始合并购物车
                 cartService.mergerToCartList(cartInfoNoLoginList,userId);
@@ -159,7 +165,4 @@ public class CartController {
         return "redirect://trade.gmall.com/trade";
 
     }
-
-
-
 }

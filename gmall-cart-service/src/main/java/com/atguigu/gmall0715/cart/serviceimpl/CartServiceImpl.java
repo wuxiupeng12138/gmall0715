@@ -27,9 +27,14 @@ public class CartServiceImpl implements CartService {
     @Autowired
     private RedisUtil redisUtil;
 
+    /***
+     * 添加商品到购物车
+     * @param skuId
+     * @param skuNum
+     * @param userId
+     */
     @Override
     public void addToCart(String skuId, Integer skuNum, String userId) {
-
         //2.添加完成之后，必须更新redis
         //获取jedis
         Jedis jedis = redisUtil.getJedis();
@@ -128,6 +133,7 @@ public class CartServiceImpl implements CartService {
         //合并之后的集合
         List<CartInfo> cartInfoList = new ArrayList<>();
         //登录 + 未登录
+        //从数据库取出登录的购物车的数据集合
         List<CartInfo> cartInfoLoginList  = cartInfoMapper.selectCartListWithCurPrice(userId);
         //准备做合并工作
         if(cartInfoLoginList != null && cartInfoLoginList.size() > 0){
@@ -169,9 +175,9 @@ public class CartServiceImpl implements CartService {
                 //操作缓存!
             }
         }
-        //做合并之后的汇总 {操作了缓存}
+        //做合并之后的汇总 {更新了缓存}
         cartInfoList = loadCartCache(userId);
-        //判断状态合并购物车
+        //判断状态合并购物车的商品状态
         if(cartInfoList != null && cartInfoList.size() > 0){
             for (CartInfo cartInfo : cartInfoList) {
                 for (CartInfo info : cartInfoNoLoginList) {
@@ -183,23 +189,21 @@ public class CartServiceImpl implements CartService {
                             cartInfo.setIsChecked("1");
                             //调用选中的方法
                             checkCart(info.getSkuId(),userId,"1");
-
                         }
                     }
                 }
             }
         }
-
         return cartInfoList;
     }
 
     @Override
     public void deleteCartList(String userTempId) {
-        //删除未登录购物车数据: redis + mysql
+        //1.删除未登录购物车在数据库中的数据: redis + mysql
         Example example = new Example(CartInfo.class);
         example.createCriteria().andEqualTo("userId",userTempId);
         cartInfoMapper.deleteByExample(example);
-        //1.删除缓存
+        //2.删除缓存中的数据
         Jedis jedis = redisUtil.getJedis();
         //key = user:userId:cart   field = skuId  value:
         String cartKey = CartConst.USER_KEY_PREFIX + userTempId + CartConst.USER_CART_KEY_SUFFIX;
@@ -209,6 +213,12 @@ public class CartServiceImpl implements CartService {
 
     }
 
+    /**
+     * 根据skuId和userId确定唯一的购物车信息，修改其选中状态并修改redis中的数据信息
+     * @param skuId
+     * @param userId
+     * @param isChecked
+     */
     @Override
     public void checkCart(String skuId, String userId, String isChecked) {
         //修改: mysql -- redis
@@ -224,7 +234,7 @@ public class CartServiceImpl implements CartService {
         Jedis jedis = redisUtil.getJedis();
         //key = user:userId:cart   field = skuId  value:
         String cartKey = CartConst.USER_KEY_PREFIX + userId + CartConst.USER_CART_KEY_SUFFIX;
-        //获取当当前的商品
+        //获取缓存中的当前商品
         String cartInfoJson = jedis.hget(cartKey, skuId);
         //转换为对象
         CartInfo cartInfoUpd = JSON.parseObject(cartInfoJson, CartInfo.class);
@@ -235,6 +245,11 @@ public class CartServiceImpl implements CartService {
         jedis.close();
     }
 
+    /**
+     * 根据userId查询缓存中的购物车(因使用的方法时在去订单，so缓存中一定会有购物车)
+     * @param userId
+     * @return
+     */
     @Override
     public List<CartInfo> getCartCheckedList(String userId) {
         List<CartInfo> cartInfoList = new ArrayList<>();
@@ -267,7 +282,7 @@ public class CartServiceImpl implements CartService {
      * @param userId
      * @return
      */
-    private List<CartInfo> loadCartCache(String userId) {
+    public List<CartInfo> loadCartCache(String userId) {
         //查询最新数据给缓存! 其实就是商品的实时价格 skuInfo.price
         List<CartInfo> cartInfoList  = cartInfoMapper.selectCartListWithCurPrice(userId);
         //判断用户购物车是否在数据库存在数据

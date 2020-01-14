@@ -30,6 +30,7 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
         if(token == null){
             token = CookieUtil.getCookieValue(request,"token",false);
         }
+
         //当token真正不为空的时候，解密用户昵称
         if(token != null){
             //解密token即可
